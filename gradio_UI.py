@@ -72,6 +72,24 @@ def highlight_differences(text1, text2):
 
     return ''.join(highlighted_diff)
 
+# Generate Prompt
+def generate_prompt(user_code, user_test_cases, coverage_report):
+    """Generate the model prompt based on user input and coverage report."""
+    prompt = f"""
+    Given the following code, existing test cases, and coverage report on lines missing test coverage,
+    generate more test cases to obtain more test coverage. Only respond with valid Python code that can be appended to the test cases.
+
+    Code:
+    {user_code}
+
+    Existing Test Cases:
+    {user_test_cases}
+
+    Missing Lines from Coverage Report:
+    {coverage_report}
+    """
+    return prompt
+
 # The main workflow for the server
 def generate_testcase(user_code, user_test_case):
 
@@ -96,11 +114,17 @@ def generate_testcase(user_code, user_test_case):
     # pred_coverage_report = subprocess.run("some command to get coverage")
     pred_coverage_report = get_code_coverage(code, test_code)
 
+
     gpt_prompt = "Given the following code, existing test cases, and lines missing test coverage, generate more test cases. Make sure the test cases are valid and increase test coverage. Only respond with valid Python code, do not return explanation."
 
     #gpt_prompt = "Given the following code, and existing test cases, generate more comprehensive test cases, make sure the test cases are valid, try to increase test code coverage. Only respond with code, do not return explanation. The returned cpde should be valid Python code starting with code: from main import Product from dataclasses import is_dataclass import pytest @pytest.fixture def product(): return Product(1, 'foo', 1.0, 10) def test_constructor(product): assert product.id == 1 assert product.name == 'foo'"
     #message=[{"role": "system", "content": "You are a helpful programmer writing test.py."},{"role": "assistant", "content": gpt_prompt + "\n" + "\n".join(code.values()) + user_test_case}]
     message=[{"role": "system", "content": "You are a helpful programmer writing test.py."},{"role": "assistant", "content": gpt_prompt + "\n" + "the code: " + code_txt + "existing test cases: " + test_code_txt + "lines missing test coverage: " + missing_lines_txt}]
+
+    # temporarily commented out
+    #gpt_prompt = generate_prompt(user_code, user_test_case, pred_coverage_report)
+    #message=[{"role": "system", "content": "You are a helpful programmer writing test.py."},{"role": "assistant", "content": gpt_prompt}]
+
 
     response = client.chat.completions.create(
         model="gpt-4o",
