@@ -22,33 +22,33 @@ def read_file_as_string(file_path):
 
 def get_code_coverage(codes, test_case):
     # Create directory tmp, main.py and test_main.py 
-    if not os.path.exists('test_cases/test_case1'):
-        os.makedirs('test_cases/test_case1')
-    if os.path.exists('test_cases/test_case1/main.py'):
-        os.remove('test_cases/test_case1/main.py')
-    if os.path.exists('test_cases/test_case1/test_main.py'):
-        os.remove('test_cases/test_case1/test_main.py')
+    if not os.path.exists('test_cases/test_case_tmp'):
+        os.makedirs('test_cases/test_case_tmp')
+    if os.path.exists('test_cases/test_case_tmp/main.py'):
+        os.remove('test_cases/test_case_tmp/main.py')
+    if os.path.exists('test_cases/test_case_tmp/test_main.py'):
+        os.remove('test_cases/test_case_tmp/test_main.py')
 
     # Write code to main.py
-    with open('test_cases/test_case1/main.py', 'w') as f:
+    with open('test_cases/test_case_tmp/main.py', 'w') as f:
         for code in codes:
             for line in code.values():
                 f.write(line + '\n')
-    with open('test_cases/test_case1/test_main.py', 'w') as f:
+    with open('test_cases/test_case_tmp/test_main.py', 'w') as f:
         # write import main
         f.write('import main\n')
         for line in test_case.values():
             f.write(line + '\n')
     
     # Run coverage
-    os.system('coverage run -m pytest test_cases/test_case1/test_main.py')
-    os.system('coverage report -m > test_cases/test_case1/coverage_report.txt')
+    os.system('coverage run -m pytest test_cases/test_case_tmp/test_main.py')
+    os.system('coverage report -m > test_cases/test_case_tmp/coverage_report.txt')
     cov = coverage.Coverage()
     cov.load()
-    coverage_percentage = 100 - 100 * (len(cov.analysis('test_cases/test_case1/main.py')[2]) / len(cov.analysis('test_cases/test_case1/main.py')[1]))
-    return str(round(coverage_percentage, 2)) + '%', cov.analysis('test_cases/test_case1/main.py')[2]
+    coverage_percentage = 100 - 100 * (len(cov.analysis('test_cases/test_case_tmp/main.py')[2]) / len(cov.analysis('test_cases/test_case_tmp/main.py')[1]))
+    return str(round(coverage_percentage, 2)) + '%', cov.analysis('test_cases/test_case_tmp/main.py')[2]
     # coverage_percentage = cov.report()
-    # return str(round(coverage_percentage, 2)) + "%", cov.analysis('test_cases/test_case1/main.py')[2]
+    # return str(round(coverage_percentage, 2)) + "%", cov.analysis('test_cases/test_case_tmp/main.py')[2]
 
 def extract_code_from_response(response):
     pattern = r"```python(.*?)```"
@@ -124,7 +124,7 @@ def generate_testcase(user_code, user_test_case, code_files, test_files):
     missing_lines = {}
     # print current root directory
     print(os.getcwd())
-    code = {i+1: line for i, line in enumerate(read_file_as_string('test_cases/test_case1/main.py').split('\n'))}
+    code = {i+1: line for i, line in enumerate(read_file_as_string('test_cases/test_case_tmp/main.py').split('\n'))}
     for key, value in code.items():
         if key in missing_lines_list:
             missing_lines[key] = value
