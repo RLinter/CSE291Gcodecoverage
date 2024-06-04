@@ -1,4 +1,4 @@
-from test_cases.test_case0.main import Product
+from main import Product
 from dataclasses import is_dataclass
 import pytest
 

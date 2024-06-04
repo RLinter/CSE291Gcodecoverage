@@ -20,30 +20,35 @@ def read_file_as_string(file_path):
     with open(file_path, 'r') as file:
         return file.read()
 
-def get_code_coverage(code, test_case):
+def get_code_coverage(codes, test_case):
     # Create directory tmp, main.py and test_main.py 
-    if not os.path.exists('tmp'):
-        os.makedirs('tmp')
-    if os.path.exists('tmp/main.py'):
-        os.remove('tmp/main.py')
-    if os.path.exists('tmp/test_main.py'):
-        os.remove('tmp/test_main.py')
+    if not os.path.exists('test_cases/test_case1'):
+        os.makedirs('test_cases/test_case1')
+    if os.path.exists('test_cases/test_case1/main.py'):
+        os.remove('test_cases/test_case1/main.py')
+    if os.path.exists('test_cases/test_case1/test_main.py'):
+        os.remove('test_cases/test_case1/test_main.py')
 
     # Write code to main.py
-    with open('tmp/main.py', 'w') as f:
-        for line in code.values():
-            f.write(line + '\n')
-    with open('tmp/test_main.py', 'w') as f:
+    with open('test_cases/test_case1/main.py', 'w') as f:
+        for code in codes:
+            for line in code.values():
+                f.write(line + '\n')
+    with open('test_cases/test_case1/test_main.py', 'w') as f:
+        # write import main
+        f.write('import main\n')
         for line in test_case.values():
             f.write(line + '\n')
     
     # Run coverage
-    os.system('coverage run -m pytest tmp/test_main.py')
-    os.system('coverage report -m > tmp/coverage_report.txt')
+    os.system('coverage run -m pytest test_cases/test_case1/test_main.py')
+    os.system('coverage report -m > test_cases/test_case1/coverage_report.txt')
     cov = coverage.Coverage()
     cov.load()
-    coverage_percentage = 100 - 100 * (len(cov.analysis('tmp/main.py')[2]) / len(cov.analysis('tmp/main.py')[1]))
-    return str(round(coverage_percentage, 2)) + '%', cov.analysis('tmp/main.py')[2]
+    coverage_percentage = 100 - 100 * (len(cov.analysis('test_cases/test_case1/main.py')[2]) / len(cov.analysis('test_cases/test_case1/main.py')[1]))
+    return str(round(coverage_percentage, 2)) + '%', cov.analysis('test_cases/test_case1/main.py')[2]
+    # coverage_percentage = cov.report()
+    # return str(round(coverage_percentage, 2)) + "%", cov.analysis('test_cases/test_case1/main.py')[2]
 
 def extract_code_from_response(response):
     pattern = r"```python(.*?)```"
@@ -112,11 +117,14 @@ def generate_testcase(user_code, user_test_case, code_files, test_files):
         code = {i+1: line for i, line in enumerate(user_code.split('\n'))}
         test_code = {i+1: line for i, line in enumerate(user_test_case.split('\n'))}
     else:
-        code = [{i+1: line for i, line in enumerate(read_file_as_string(code_file).split('\n'))} for code_file in code_files][0]
+        code = [{i+1: line for i, line in enumerate(read_file_as_string(code_file).split('\n'))} for code_file in code_files]
         test_code = [{i+1: line for i, line in enumerate(read_file_as_string(test_file).split('\n'))} for test_file in test_files][0]
 
     pred_coverage_report, missing_lines_list = get_code_coverage(code, test_code)
     missing_lines = {}
+    # print current root directory
+    print(os.getcwd())
+    code = {i+1: line for i, line in enumerate(read_file_as_string('test_cases/test_case1/main.py').split('\n'))}
     for key, value in code.items():
         if key in missing_lines_list:
             missing_lines[key] = value
@@ -136,11 +144,11 @@ def generate_testcase(user_code, user_test_case, code_files, test_files):
 
     #gpt_prompt = "Given the following code, and existing test cases, generate more comprehensive test cases, make sure the test cases are valid, try to increase test code coverage. Only respond with code, do not return explanation. The returned cpde should be valid Python code starting with code: from main import Product from dataclasses import is_dataclass import pytest @pytest.fixture def product(): return Product(1, 'foo', 1.0, 10) def test_constructor(product): assert product.id == 1 assert product.name == 'foo'"
     #message=[{"role": "system", "content": "You are a helpful programmer writing test.py."},{"role": "assistant", "content": gpt_prompt + "\n" + "\n".join(code.values()) + user_test_case}]
-    message=[{"role": "system", "content": "You are a helpful programmer writing test.py."},{"role": "assistant", "content": gpt_prompt + "\n" + "the code: " + code_txt + "existing test cases: " + test_code_txt + "lines missing test coverage: " + missing_lines_txt}]
+    message=[{"role": "system", "content": "You are a helpful programmer writing test.py. You are using pytest. If import from main is missing, import main to test.py."},{"role": "assistant", "content": gpt_prompt + "\n" + "the code: " + code_txt + "existing test cases: " + test_code_txt + "lines missing test coverage: " + missing_lines_txt}]
 
     # temporarily commented out
     #gpt_prompt = generate_prompt(user_code, user_test_case, pred_coverage_report)
-    #message=[{"role": "system", "content": "You are a helpful programmer writing test.py."},{"role": "assistant", "content": gpt_prompt}]
+    #message=[{"role": "system", "content": "You are a helpful programmer writing test.py. You are using pytest."},{"role": "assistant", "content": gpt_prompt}]
 
 
     response = client.chat.completions.create(
@@ -155,7 +163,7 @@ def generate_testcase(user_code, user_test_case, code_files, test_files):
     
     #TODO subtask 4: after receive the feedback from llm, organize it into a machine processable format and use model to check the updated test case coverage, store as succ_coverage_report
     # succ_coverage_report = subprocess.run("some command to get coverage")
-    succ_coverage_report, _ = get_code_coverage(code, generated_code)
+    succ_coverage_report, _ = get_code_coverage([code], generated_code)
     #TODO subtask 5: highlight the output shown in the UI to tell the user what difference we made. (new test we added, previous test case we modified, test coverage changes)
     responseText = highlight_differences(test_code_txt, responseText)
     return responseText, pred_coverage_report, succ_coverage_report
