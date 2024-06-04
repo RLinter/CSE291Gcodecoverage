@@ -181,8 +181,8 @@ if __name__ == '__main__':
         outputs=[
                 #  Video(label="Vid", width=512, height=512),
                  HTML(label="generated test cases"),
-                 Textbox(label="report for previoustest case coverage"),
-                 Textbox(label="report for new test case coverage"),
+                 Textbox(label="report for previous test coverage"),
+                 Textbox(label="report for new test coverage"),
                 #  gr.Slider(label='seed')
                  ],
         # title=title_markdown, description=DESCRIPTION, theme=gr.themes.Default(), css=block_css,
