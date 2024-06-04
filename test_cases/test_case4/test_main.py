@@ -1,5 +1,5 @@
 import pytest
-import thousand_variables
+import main
 
 # Generate test cases programmatically
 @pytest.mark.parametrize("i", range(1, 1001))
@@ -8,10 +8,10 @@ def test_dynamic_variable_value(i):
     expected_value = i
     
     # Check if the variable exists in the module
-    assert hasattr(thousand_variables, var_name), f"{var_name} does not exist"
+    assert hasattr(main, var_name), f"{var_name} does not exist"
     
     # Retrieve the variable's value from the module
-    var_value = getattr(thousand_variables, var_name)
+    var_value = getattr(main, var_name)
     
     # Check if the variable's value is what we expect
     assert var_value == expected_value, f"{var_name} should be {expected_value} but is {var_value}"
