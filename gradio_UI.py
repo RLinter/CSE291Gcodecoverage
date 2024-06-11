@@ -114,7 +114,7 @@ def generate_testcase(user_code, user_test_case, code_files, test_files):
 
     #TODO subtask 2: organize the user input into reasonable llm prompt as following format
     if user_code:
-        code = {i+1: line for i, line in enumerate(user_code.split('\n'))}
+        code = [{i+1: line for i, line in enumerate(user_code.split('\n'))}]
         test_code = {i+1: line for i, line in enumerate(user_test_case.split('\n'))}
     else:
         code = [{i+1: line for i, line in enumerate(read_file_as_string(code_file).split('\n'))} for code_file in code_files]
@@ -171,12 +171,12 @@ def generate_testcase(user_code, user_test_case, code_files, test_files):
 if __name__ == '__main__':
     demo = gr.Interface(
         fn=generate_testcase,
-        inputs=[Textbox(label="Enter you coder",
+        inputs=[Textbox(label="Enter you code",
                         placeholder="Please enter your code. \n"),
                 Textbox(label="Enter you test case",
                         placeholder="Please enter your test case. \n"),
-                File(label="Upload your coding files", file_count="multiple", type="filepath"),
-                File(label="Upload your testing files", file_count="multiple", type="filepath")
+                File(label="Upload your code files", file_count="multiple", type="filepath"),
+                File(label="Upload your test file", file_count="multiple", type="filepath")
                 ],
         outputs=[
                 #  Video(label="Vid", width=512, height=512),
